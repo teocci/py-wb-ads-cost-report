@@ -1,50 +1,74 @@
 # WB Ads & Orders Report Builder
 
-This small utility merges two Wildberries-related Excel reports and produces a single, tidy Excel file with
-per‑SKU advertisement costs, orders, and **CPO** (cost per order). It also writes a compact summary block to the
-right side of the sheet.
+This utility merges two Wildberries-related Excel reports and produces a single Excel file with
+per‑SKU advertisement costs, orders, and **CPO** (cost per order). It also writes a compact summary block
+to the right side of the sheet.
 
-> Script file: `build_wb_ads_report.py`
+> Script: `build_wb_ads_report.py`
+
+## File layout & naming (automated mode)
+
+Put your files under the `data/` directory using these names:
+
+- **Ads cost**: `ads-cost-<supplier_id>-<YYYY-MM-DD>.xlsx`
+- **Supplier goods**: `supplier-goods-<supplier_id>-<YYYY-MM-DD>.xlsx`
+
+The report will be written to the `reports/` directory with the name:
+
+- `wb-ads-report-<supplier_id>-<YYYY-MM-DD>.xlsx`
+
+> The script also tolerates additional suffixes after the date (e.g. exports with hash codes):
+> it will fallback to a glob pattern like `supplier-goods-<supplier>-<date>*`. The exact name
+> above is recommended for consistency.
 
 ## What it does
 
-1. **Reads** the *ads-cost* file (downloaded from MP Manager), which contains:
-   - `Товар` (product name)
-   - `Артикул товара` (article/SKU)
-   - `Сумма затрат на рекламу` (ads spend for the day)
-
-2. **Reads** the *supplier-goods* file (downloaded from Wildberries supplier portal), which contains rows per warehouse.
-   The script **aggregates by article** and keeps:
-   - `Артикул WB` → article key
-   - `шт.` → summed quantity (**Заказано, шт.**)
-   - `Сумма заказов минус комиссия WB, руб.` → summed revenue (**Заказано, руб.**)
-
-3. **Left-joins** the two datasets by article (string match).
-
-4. **Calculates** `Затраты на 1 заказ` (CPO) = `Сумма затрат на рекламу` / `Заказано, шт.`
-   (left blank when quantity is 0).
-
-5. **Writes** the output Excel file with formatted numbers and a summary block:
+1. Reads the ads-cost file and keeps: `Товар`, `Артикул товара`, `Сумма затрат на рекламу`.
+2. Reads the supplier-goods file, aggregates by `Артикул WB`, and keeps summed:
+   - `шт.` → **Заказано, шт.**
+   - `Сумма заказов минус комиссия WB, руб.` → **Заказано, руб.**
+3. Left‑joins datasets by article and calculates **Затраты на 1 заказ** = cost / qty (blank if qty = 0).
+4. Writes a formatted Excel with a summary block:
    - *Финансовые показатели на основе отчетов ВБ*
-   - *Итого заказов, руб.* = sum of `Заказано, руб.`
-   - *Итого затрат на рекламу, руб.* = sum of `Сумма затрат на рекламу`
+   - *Итого заказов, руб.* (sum of **Заказано, руб.**)
+   - *Итого затрат на рекламу, руб.* (sum of **Сумма затрат на рекламу**)
 
+## Installation
 
-## Input files
+```bash
+python -V  # Python 3.10+ (3.11 tested)
+pip install -r requirements.txt
+```
 
-- **Ads-cost file** (e.g., `Аналитика по товарам от 27.07.2025.xlsx`):
-  - Required columns: `Товар`, `Артикул товара`, `Сумма затрат на рекламу`
+## Usage
 
-- **Supplier-goods file** (e.g., `supplier-goods-3925272-2025-06-21-2025-06-21-*.xlsx`):
-  - Required columns (some headers may be a few rows below due to a preamble; the script auto-detects):
-    - `Артикул WB`, `шт.`, `Сумма заказов минус комиссия WB, руб.`
+### Automated (recommended)
+Organize files:
 
-> All article IDs are normalized to **string** during processing to avoid number/text mismatches.
+```
+data/
+  ads-cost-3925272-2025-06-21.xlsx
+  supplier-goods-3925272-2025-06-21.xlsx
+reports/   # created automatically
+```
 
+Run:
 
-## Output
+```bash
+python build_wb_ads_report.py --supplier-id 3925272 --date 2025-06-21
+```
 
-A single Excel workbook (default name: `wb_ads_report.xlsx`) with one sheet `Отчет` and the columns:
+Optional:
+```bash
+python build_wb_ads_report.py --supplier-id 3925272 --date 2025-06-21 --data-dir "D:/path/to/data" --reports-dir "D:/path/to/reports" --ads-sheet 0 --goods-sheet 0
+```
+
+### Manual (explicit paths)
+```bash
+python build_wb_ads_report.py   --ads "D:/files/Аналитика по товарам от 27.07.2025.xlsx"   --goods "D:/files/supplier-goods-3925272-2025-06-21.xlsx"   --out "D:/files/wb-ads-report-3925272-2025-06-21.xlsx"
+```
+
+## Output columns (sheet `Отчет`)
 
 1. `Наименование`
 2. `Артикул`
@@ -53,53 +77,13 @@ A single Excel workbook (default name: `wb_ads_report.xlsx`) with one sheet `О�
 5. `Заказано, шт.`
 6. `Затраты на 1 заказ`
 
-The sheet includes number formatting and a summary block on the right.
-
-## Installation
-
-```bash
-python -V  # Python 3.10+ recommended (3.11 tested)
-pip install -r requirements.txt
-```
-
-## Usage
-
-```bash
-python build_wb_ads_report_old.py   --ads "Аналитика по товарам от 27.07.2025.xlsx"   --goods "supplier-goods-3925272-2025-06-21-2025-06-21-khzvlnmig.xlsx"   --out "wb_ads_report_2025-07-27.xlsx"
-```
-
-Optional arguments:
-- `--ads-sheet`   (sheet index or name in the ads file; default 0)
-- `--goods-sheet` (sheet index or name in the supplier-goods file; default 0)
-
-### Windows tips
-- Wrap paths with spaces in quotes.
-- Ensure file encoding is preserved; Excel files are binary so encoding of filenames is usually the only concern.
-
-## Column mapping
-
-| Source file     | Input column (RU)                                  | Output column (RU)           |
-|-----------------|----------------------------------------------------|------------------------------|
-| ads-cost        | `Товар`                                            | `Наименование`               |
-| ads-cost        | `Артикул товара`                                   | `Артикул`                    |
-| ads-cost        | `Сумма затрат на рекламу`                          | `Сумма затрат на рекламу`    |
-| supplier-goods  | `Артикул WB`                                       | `Артикул` (join key)         |
-| supplier-goods  | `шт.` (summed)                                     | `Заказано, шт.`              |
-| supplier-goods  | `Сумма заказов минус комиссия WB, руб.` (summed)   | `Заказано, руб.`             |
-| computed        | —                                                  | `Затраты на 1 заказ`         |
-
 ## Troubleshooting
 
-- **Missing column error**: The script validates the presence of required columns and shows which ones are missing.
-  If your WB report contains a multi-line preamble, the script tries several header rows automatically.
-- **Zero or blank CPO**: `Затраты на 1 заказ` is left blank if `Заказано, шт.` = 0.
-- **Mismatched keys**: Make sure the same article IDs exist in both files. The join is by string article IDs.
-- **Multiple rows per article in supplier-goods**: This is expected (per warehouse). The script groups and sums by `Артикул WB`.
-
-## Development notes
-
-- Implemented with `pandas`, `openpyxl`, and `XlsxWriter`.
-- The code is in a single file for simplicity and can be embedded into larger pipelines easily.
+- **File not found**: the script looks first for the exact name, then for a glob with extra suffixes;
+  ensure the `supplier_id` and `date` are correct.
+- **Missing columns**: the script validates inputs and shows what’s missing.
+- **Headers shifted by a preamble**: the script tries several header rows automatically.
+- **CPO blank**: quantity was zero; this is expected.
 
 ## License
 
