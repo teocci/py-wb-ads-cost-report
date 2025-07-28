@@ -14,7 +14,7 @@ def read_ads_cost(path: str | Path, sheet_name=0) -> pd.DataFrame:
     df = pd.read_excel(path, sheet_name=sheet_name, engine='openpyxl')
     df.columns = df.columns.astype(str).str.strip()
 
-    required = ['Товар', 'Артикул товара', 'Сумма затрат на рекламу']
+    required = ['Товар', 'Артикул товара', 'Сумма затрат']
     missing = [c for c in required if c not in df.columns]
     if missing:
         raise KeyError(f'Missing columns in {Path(path).name}: {missing}')
@@ -22,7 +22,7 @@ def read_ads_cost(path: str | Path, sheet_name=0) -> pd.DataFrame:
     out = df[required].rename(columns={
         'Товар': 'Наименование',
         'Артикул товара': 'Артикул',
-        'Сумма затрат на рекламу': 'Сумма затрат на рекламу',
+        'Сумма затрат': 'Сумма затрат на рекламу',
     }).copy()
 
     out['Артикул'] = out['Артикул'].astype(str).str.strip()
@@ -184,8 +184,8 @@ def resolve_input_path(data_dir: Path, prefix: str, supplier_id: str, date_str: 
 
 def default_paths(data_dir: str | Path, supplier_id: str, date_str: str) -> tuple[Path, Path]:
     data_dir = Path(data_dir)
-    ads_path = resolve_input_path(data_dir, 'ads-cost', supplier_id, date_str)
-    goods_path = resolve_input_path(data_dir, 'supplier-goods', supplier_id, date_str)
+    ads_path = resolve_input_path(data_dir, 'mp-ads-cost', supplier_id, date_str)
+    goods_path = resolve_input_path(data_dir, 'wb-supplier-goods', supplier_id, date_str)
     return ads_path, goods_path
 
 

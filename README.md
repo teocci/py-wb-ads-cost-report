@@ -55,17 +55,17 @@ reports/   # created automatically
 Run:
 
 ```bash
-python build_wb_ads_report.py --supplier-id 3925272 --date 2025-06-21
+python build_daily_ads_report.py --supplier-id 3925272 --date 2025-06-21
 ```
 
 Optional:
 ```bash
-python build_wb_ads_report.py --supplier-id 3925272 --date 2025-06-21 --data-dir "D:/path/to/data" --reports-dir "D:/path/to/reports" --ads-sheet 0 --goods-sheet 0
+python build_daily_ads_report.py --supplier-id 3925272 --date 2025-06-21 --data-dir "D:/path/to/data" --reports-dir "D:/path/to/reports" --ads-sheet 0 --goods-sheet 0
 ```
 
 ### Manual (explicit paths)
 ```bash
-python build_wb_ads_report.py   --ads "D:/files/Аналитика по товарам от 27.07.2025.xlsx"   --goods "D:/files/supplier-goods-3925272-2025-06-21.xlsx"   --out "D:/files/wb-ads-report-3925272-2025-06-21.xlsx"
+python build_daily_ads_report.py   --ads "D:/files/Аналитика по товарам от 27.07.2025.xlsx"   --goods "D:/files/supplier-goods-3925272-2025-06-21.xlsx"   --out "D:/files/wb-ads-report-3925272-2025-06-21.xlsx"
 ```
 
 ## Output columns (sheet `Отчет`)
